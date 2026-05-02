@@ -242,7 +242,7 @@ export const update = async (
     }
   }
 
-  return findById(id);
+  return findByIdRaw(id);
 };
 
 export const remove = async (id: number): Promise<void> => {
