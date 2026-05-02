@@ -8,6 +8,7 @@ import {
   ChevronUp,
   Clock3,
   Copy,
+  Download,
   Edit3,
   FileCode2,
   Globe,
@@ -43,6 +44,7 @@ import { DifficultyBadge } from '@/components/oj/DifficultyBadge';
 
 import { SubmissionStatusBadge } from '@/components/oj/SubmissionStatusBadge';
 import { formatDateTime, normalizeCodeOutput, generateRandomInput } from '@/lib/oj';
+import { exportProblemToPDFViaCanvas } from '@/lib/pdf';
 import MarkdownRenderer from '@/components/common/MarkdownRenderer';
 import { toast } from '@/components/common/Toast';
 
@@ -145,6 +147,7 @@ export default function ProblemDetail() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedSampleIndex, setSelectedSampleIndex] = useState(0);
   const [generatingRandom, setGeneratingRandom] = useState(false);
+  const [exportingPDF, setExportingPDF] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const consoleResizerRef = useRef<HTMLDivElement>(null);
@@ -580,6 +583,21 @@ export default function ProblemDetail() {
     navigator.clipboard.writeText(text);
   }
 
+  async function handleExportPDF() {
+    if (!problem || exportingPDF) return;
+    
+    setExportingPDF(true);
+    try {
+      await exportProblemToPDFViaCanvas(problem);
+      toast.success('PDF 导出成功');
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+      toast.error('PDF 导出失败，请稍后再试');
+    } finally {
+      setExportingPDF(false);
+    }
+  }
+
   const summaryStats = useMemo(() => {
     if (!problem) {
       return [];
@@ -638,6 +656,20 @@ export default function ProblemDetail() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={handleExportPDF}
+            disabled={exportingPDF}
+          >
+            {exportingPDF ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            导出PDF
+          </Button>
           {user?.id === problem.creator_id && (
             <Button
               variant="outline"
